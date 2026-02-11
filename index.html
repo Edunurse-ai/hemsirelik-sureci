@@ -2,119 +2,95 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>EduNurse_AI - Akıllı Hemşirelik Sistemi</title>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduNurse_AI | Akıllı Karar Destek</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; scroll-behavior: smooth; }
-        .container { background: white; padding: 30px; border-radius: 15px; max-width: 850px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .score-banner { position: sticky; top: 10px; z-index: 100; padding: 20px; border-radius: 12px; color: white; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; transition: 0.5s; }
-        .low-risk-bg { background: linear-gradient(135deg, #27ae60, #2980b9); }
-        .high-risk-bg { background: linear-gradient(135deg, #c0392b, #e74c3c); animation: shake 0.5s ease-in-out; }
-        #diagnosis-box { display: none; background: #fff3cd; border: 2px dashed #ffc107; padding: 15px; margin-top: 15px; border-radius: 8px; text-align: center; }
-        .section-header { background: #2c3e50; color: white; padding: 10px; border-radius: 5px; margin-top: 20px; font-weight: bold; }
-        .risk-item, .nanda-item { display: flex; flex-direction: column; padding: 12px; border-bottom: 1px solid #f1f1f1; }
-        .row-main { display: flex; align-items: center; }
-        input[type="checkbox"] { width: 22px; height: 22px; margin-right: 15px; cursor: pointer; }
-        .info-note { font-size: 0.85em; color: #666; margin-left: 37px; margin-top: 4px; font-style: italic; }
-        .save-btn { background: #27ae60; color: white; border: none; padding: 20px; border-radius: 10px; width: 100%; font-size: 1.2em; font-weight: bold; cursor: pointer; margin-top: 30px; box-shadow: 0 4px 10px rgba(39,174,96,0.3); }
-        .save-btn:hover { background: #2ecc71; }
-        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
+        .card { background: white; max-width: 500px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-top: 8px solid #2c3e50; }
+        .header { text-align: center; margin-bottom: 25px; }
+        .score-box { font-size: 2.5em; font-weight: bold; color: #e74c3c; background: #fdf2f2; padding: 10px; border-radius: 10px; margin: 10px 0; border: 1px solid #fab1a0; }
+        .risk-item { display: flex; align-items: center; margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; transition: 0.3s; cursor: pointer; }
+        .risk-item:hover { background: #e9ecef; }
+        input[type="checkbox"] { transform: scale(1.6); margin-right: 15px; cursor: pointer; }
+        .btn { background: #27ae60; color: white; border: none; padding: 18px; width: 100%; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s; box-shadow: 0 4px 10px rgba(39,174,96,0.3); }
+        .btn:hover { background: #219150; transform: translateY(-2px); }
+        label { cursor: pointer; font-weight: 500; flex-grow: 1; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="scoreBanner" class="score-banner low-risk-bg">
-        <div><span style="font-size: 1em;">İTAKİ PUANI</span><br><span id="totalScore" style="font-size: 3em; font-weight: bold;">0</span></div>
-        <div style="text-align: right;"><span id="risk-text" style="font-size: 1.5em; font-weight: bold;">Düşük Risk</span><br><span>EduNurse_AI Analizi</span></div>
+<div class="card">
+    <div class="header">
+        <h2 style="margin:0; color:#2c3e50;">EduNurse_AI</h2>
+        <p style="color:#666;">İTAKİ Düşme Riski Ölçeği</p>
+        <div id="score-display" class="score-box">0 PUAN</div>
     </div>
 
-    <div id="diagnosis-box">
-        <strong>⚠️ SİSTEM UYARISI:</strong> <p>Yüksek düşme riski! Tanı listesindeki öneriyi onaylayınız.</p>
-        <button onclick="document.getElementById('nanda-section').scrollIntoView(); document.getElementById('tani-dusme').checked=true;" style="padding:5px 15px; cursor:pointer;">Tanıya Git</button>
-    </div>
-
-    <h2>İTAKİ Düşüş Riski Ölçeği</h2>
-    <div class="section-header">MİNÖR RİSKLER (+1)</div>
-    <div id="minor-list"></div>
-
-    <div class="section-header" style="background:#e74c3c">MAJÖR RİSKLER (+5)</div>
-    <div id="major-list"></div>
-
-    <div id="nanda-section">
-        <h2 style="margin-top:50px">Hemşirelik Tanıları (NANDA)</h2>
-        <div class="nanda-item" id="dusme-riski-row">
-            <div class="row-main">
-                <input type="checkbox" id="tani-dusme">
-                <label><strong>Düşme Riski (00155)</strong></label>
-            </div>
-            <div class="info-note">Etiyoloji: İTAKİ risk puanı yüksekliği.</div>
+    <div id="questions">
         </div>
-    </div>
 
-    <button class="save-btn" onclick="veriyiBulutaGonder()">VERİLERİ BULUTA GÖNDER & KAYDET</button>
+    <button class="btn" onclick="kaydet()">BULUTA KAYDET VE ANALİZ ET</button>
 </div>
 
 <script>
-    // --- FIREBASE KONFİGÜRASYONU (BURAYI KENDİ BİLGİLERİNİZLE DOLDURUN) ---
+    // 🔥 BURAYI FIREBASE PANELİNDEKİ BİLGİLERLE DOLDURUN 🔥
     const firebaseConfig = {
-        apiKey: "BURAYA_API_KEY_GELECEK",
+        apiKey: "BURAYA_API_KEY_YAZIN",
         authDomain: "edunurse-ai.firebaseapp.com",
         databaseURL: "https://edunurse-ai-default-rtdb.firebaseio.com",
         projectId: "edunurse-ai",
         storageBucket: "edunurse-ai.appspot.com",
-        messagingSenderId: "BURAYA_ID_GELECEK",
-        appId: "BURAYA_APP_ID_GELECEK"
+        messagingSenderId: "BURAYA_SENDER_ID_YAZIN",
+        appId: "BURAYA_APP_ID_YAZIN"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    // Firebase'i Başlat
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
 
-    // --- FORM MADDELERİ ---
-    const minors = ["65 yaş ve üstü", "Bilinci kapalı", "Son 1 ayda düşme öyküsü", "Kronik hastalık*", "Fiziksel destek ihtiyacı", "İnkontinans", "Görme zayıf", "4'ten fazla ilaç", "3'ten az ekipman", "Korkuluk yok", "Fiziksel engel"];
-    const majors = ["Bilinç açık/Koopere değil", "Denge problemi", "Baş dönmesi", "Ortostatik hipotansiyon", "Görme engeli", "Bedensel engel", "3 ve üstü ekipman", "Riskli ilaç kullanımı"];
+    const sorular = [
+        {txt: "65 Yaş ve Üstü", p: 1},
+        {txt: "Bilinci Kapalı", p: 1},
+        {txt: "Son 1 Ayda Düşme Öyküsü", p: 1},
+        {txt: "Denge Problemi", p: 5},
+        {txt: "Baş Dönmesi", p: 5},
+        {txt: "Ortostatik Hipotansiyon", p: 5}
+    ];
 
-    function render() {
-        minors.forEach(m => document.getElementById('minor-list').innerHTML += `<div class="risk-item"><div class="row-main"><input type="checkbox" class="itaki-check" data-p="1" onchange="updateUI()"><label>${m}</label></div></div>`);
-        majors.forEach(m => document.getElementById('major-list').innerHTML += `<div class="risk-item"><div class="row-main"><input type="checkbox" class="itaki-check" data-p="5" onchange="updateUI()"><label>${m}</label></div></div>`);
+    const qDiv = document.getElementById('questions');
+    sorular.forEach((s, i) => {
+        qDiv.innerHTML += `
+            <div class="risk-item">
+                <input type="checkbox" id="q${i}" class="chk" data-p="${s.p}" onchange="hesapla()">
+                <label for="q${i}">${s.txt} (+${s.p})</label>
+            </div>`;
+    });
+
+    function hesapla() {
+        let total = 0;
+        document.querySelectorAll('.chk:checked').forEach(c => total += parseInt(c.dataset.p));
+        document.getElementById('score-display').innerText = total + " PUAN";
     }
 
-    function updateUI() {
-        let score = 0;
-        document.querySelectorAll('.itaki-check:checked').forEach(c => score += parseInt(c.getAttribute('data-p')));
-        document.getElementById('totalScore').innerText = score;
-        const banner = document.getElementById('scoreBanner');
-        if (score >= 5) {
-            banner.className = "score-banner high-risk-bg";
-            document.getElementById('risk-text').innerText = "Yüksek Risk";
-            document.getElementById('diagnosis-box').style.display = "block";
-        } else {
-            banner.className = "score-banner low-risk-bg";
-            document.getElementById('risk-text').innerText = "Düşük Risk";
-            document.getElementById('diagnosis-box').style.display = "none";
-        }
-    }
-
-    // --- BULUT KAYIT FONKSİYONU ---
-    function veriyiBulutaGonder() {
-        const skor = document.getElementById('totalScore').innerText;
-        const risk = document.getElementById('risk-text').innerText;
-        const tani = document.getElementById('tani-dusme').checked ? "Konuldu" : "Konulmadı";
-
-        database.ref('degerlendirmeler').push({
+    function kaydet() {
+        const score = document.getElementById('score-display').innerText;
+        
+        // Firebase'e veri yazma denemesi
+        db.ref('kayitlar').push({
             tarih: new Date().toLocaleString('tr-TR'),
-            itaki_skoru: skor,
-            risk_durumu: risk,
-            nanda_tanisi: tani,
-            platform: "EduNurseAI_web"
+            puan: score,
+            kaynak: "Web Uygulaması"
         }).then(() => {
-            alert("Hocam, veri başarıyla EduNurse_AI bulutuna kaydedildi!");
-        }).catch(err => alert("Hata: " + err.message));
+            alert("Hocam Tebrikler! Veri EduNurse_AI bulutuna başarıyla uçtu.");
+        }).catch(hata => {
+            console.error(hata);
+            alert("Hata Oluştu: " + hata.message + "\n\nLütfen Firebase Kurallarını (Rules) kontrol edin.");
+        });
     }
-
-    render();
 </script>
 </body>
 </html>
