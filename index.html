@@ -3,46 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduNurse_AI | Karar Destek Sistemi</title>
+    <title>EduNurse_AI | İTAKİ Klinik Form</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; padding: 10px; }
-        .container { background: white; max-width: 650px; margin: auto; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 12px solid #2c3e50; }
-        .score-sticky { position: sticky; top: 10px; z-index: 100; background: #fff; padding: 15px; border-radius: 15px; border: 2px solid #2c3e50; text-align: center; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        #score-num { font-size: 3rem; font-weight: bold; color: #e74c3c; line-height: 1; }
-        .diagnosis-box { display: none; margin-top: 15px; padding: 15px; background: #fff5f5; border-left: 5px solid #e74c3c; border-radius: 5px; text-align: left; }
-        .risk-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; transition: 0.2s; }
-        .risk-row:hover { background: #f9f9f9; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; scroll-behavior: smooth; }
+        .container { background: white; padding: 25px; border-radius: 15px; max-width: 800px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .score-banner { 
+            position: sticky; top: 10px; z-index: 100;
+            padding: 20px; border-radius: 12px; color: white; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: 0.5s; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .low-risk-bg { background: linear-gradient(135deg, #27ae60, #2980b9); }
+        .high-risk-bg { background: linear-gradient(135deg, #c0392b, #e74c3c); animation: shake 0.5s ease-in-out; }
+
+        #diagnosis-box { 
+            display: none; background: #fff3cd; border: 2px dashed #ffc107;
+            padding: 15px; margin-top: 15px; border-radius: 8px; text-align: center;
+        }
+
+        .section-header { background: #2c3e50; color: white; padding: 10px; border-radius: 5px; margin-top: 20px; font-weight: bold; font-size: 0.9em; }
+        .risk-item, .nanda-item { display: flex; flex-direction: column; padding: 12px; border-bottom: 1px solid #f1f1f1; }
+        .row-main { display: flex; align-items: center; }
         input[type="checkbox"] { width: 22px; height: 22px; margin-right: 15px; cursor: pointer; }
-        label { cursor: pointer; font-size: 15px; flex-grow: 1; }
-        .btn { background: #27ae60; color: white; border: none; padding: 20px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 25px; }
-        .category { background: #f1f1f1; padding: 5px 12px; font-weight: bold; font-size: 13px; border-radius: 4px; margin-top: 15px; color: #555; }
+        
+        .info-note { font-size: 0.85em; color: #666; margin-left: 37px; margin-top: 4px; font-style: italic; }
+        .highlight-tani { background-color: #fff3cd; border: 2px solid #ffc107 !important; transition: 1s; }
+
+        .save-btn { 
+            background: #27ae60; color: white; border: none; padding: 20px; 
+            width: 100%; border-radius: 10px; font-size: 1.2em; font-weight: bold; 
+            cursor: pointer; margin-top: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .save-btn:hover { background: #219150; transform: translateY(-2px); }
+        
+        button.action-btn { background: #2c3e50; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; color:#2c3e50; margin-top:0;">EduNurse_AI</h2>
-    
-    <div class="score-sticky">
-        <div id="score-num">0</div>
-        <div style="font-weight: bold; color: #2c3e50;">TOPLAM PUAN</div>
-        
-        <div id="diagnosis" class="diagnosis-box">
-            <strong style="color: #c0392b;">Klinik Karar (Tanı):</strong><br>
-            <span style="font-size: 1.1em;">[NANDA 00155] Düşme Riski</span>
-            <hr>
-            <small><strong>Girişimler:</strong> Çevre güvenliği sağla, 4 yapraklı yonca simgesi as, hastaya refakatçi sağla.</small>
+    <div id="scoreBanner" class="score-banner low-risk-bg">
+        <div>
+            <span style="font-size: 0.9em;">İTAKİ TOPLAM PUAN</span><br>
+            <span id="totalScore" style="font-size: 2.5em; font-weight: bold;">0</span>
+        </div>
+        <div style="text-align: right;">
+            <span id="risk-text" style="font-size: 1.3em; font-weight: bold;">Düşük Risk</span><br>
+            <span id="risk-desc">Standart Önlemler</span>
         </div>
     </div>
 
-    <div id="questions-area"></div>
+    <div id="diagnosis-box">
+        <strong style="color: #856404;">⚠️ KLİNİK KARAR DESTEĞİ:</strong> 
+        <p>Risk eşiği aşıldı. "Düşme Riski" tanısını bakım planına eklemelisiniz.</p>
+        <button class="action-btn" onclick="goToDiagnosis()">Tanıya Git ve Onayla</button>
+    </div>
 
-    <button class="btn" onclick="veriyiGonder()">BULUTA KAYDET & TANILAMAYI BİTİR</button>
+    <h2 style="color:#2c3e50; text-align:center;">EduNurse_AI Karar Destek</h2>
+    
+    <div class="section-header">MİNÖR RİSK FAKTÖRLERİ (+1 Puan)</div>
+    <div id="minor-container"></div>
+
+    <div class="section-header" style="background:#e74c3c">MAJÖR RİSK FAKTÖRLERİ (+5 Puan)</div>
+    <div id="major-container"></div>
+
+    <div id="nanda-section">
+        <hr style="margin-top:40px">
+        <h3>Hemşirelik Tanıları (NANDA)</h3>
+        <div class="nanda-item" id="dusme-riski-row" style="border: 1px solid #eee; border-radius: 8px; padding: 15px;">
+            <div class="row-main">
+                <input type="checkbox" id="tani-dusme">
+                <label style="cursor:pointer"><strong>Düşme Riski (00155)</strong></label>
+            </div>
+            <div class="info-note">Etiyoloji: İTAKİ risk puanı yüksekliği ile ilişkili.</div>
+        </div>
+    </div>
+
+    <button class="save-btn" onclick="veriyiBulutaGonder()">✅ DEĞERLENDİRMEYİ TAMAMLA VE KAYDET</button>
+    <p style="text-align:center; font-size: 12px; color: #999; margin-top: 15px;">EduNurse_AI Akademik Veri Altyapısı</p>
 </div>
 
 <script>
+    // Firebase Yapılandırması
     const firebaseConfig = {
         apiKey: "AIzaSyBs0vGv_y7F0X1zSInuCjCgvSvUvU8-e6E",
         authDomain: "edunurse-ai.firebaseapp.com",
@@ -56,66 +105,104 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const sorular = [
-        {txt: "65 Yaş ve Üstü", p: 1, cat: "Demografik"},
-        {txt: "Bilinci Kapalı", p: 1, cat: "Nörolojik"},
-        {txt: "Düşme Öyküsü (Son 1 Ay)", p: 1, cat: "Geçmiş"},
-        {txt: "Denge Problemi", p: 5, cat: "Fiziksel"},
-        {txt: "Baş Dönmesi", p: 5, cat: "Fiziksel"},
-        {txt: "Ortostatik Hipotansiyon", p: 5, cat: "Vital"},
-        {txt: "Görme Engeli", p: 1, cat: "Duyusal"},
-        {txt: "İşitme Engeli", p: 1, cat: "Duyusal"},
-        {txt: "Konfüzyon / Deliryum", p: 1, cat: "Bilişsel"},
-        {txt: "Üriner İnkontinans (Kaçırma)", p: 1, cat: "Boşaltım"},
-        {txt: "Sık İdrara Çıkma", p: 1, cat: "Boşaltım"},
-        {txt: "Kronik Hastalıklar (DM, HT vb.)", p: 1, cat: "Tıbbi"},
-        {txt: "Sedatif/Hipnotik İlaç Kullanımı", p: 1, cat: "İlaç"},
-        {txt: "Antidepresan Kullanımı", p: 1, cat: "İlaç"},
-        {txt: "Antipsikotik Kullanımı", p: 1, cat: "İlaç"},
-        {txt: "Diüretik Kullanımı", p: 1, cat: "İlaç"},
-        {txt: "Yürüme Yardımcısı Kullanımı", p: 1, cat: "Mobilite"},
-        {txt: "Tekerlekli Sandalye Kullanımı", p: 1, cat: "Mobilite"},
-        {txt: "Sedye/Yatak Kenarlıkları Eksikliği", p: 1, cat: "Çevresel"}
+    const minorData = [
+        { id: 1, txt: "65 yaş ve üstü" },
+        { id: 2, txt: "Bilinci kapalı" },
+        { id: 3, txt: "Son 1 ay içinde düşme öyküsü var" },
+        { id: 4, txt: "Kronik hastalık öyküsü var*", note: "* HT, Diyabet, Dolaşım/Sindirim Sis. Hast., Artrit, Paralizi, Depresyon, Nörolojik Hastalıklar" },
+        { id: 5, txt: "Fiziksel desteğe (yürüteç, değnek vb.) ihtiyacı var" },
+        { id: 6, txt: "Üriner/Fekal kontinans bozukluğu var" },
+        { id: 7, txt: "Görme durumu zayıf" },
+        { id: 8, txt: "4'den fazla ilaç kullanımı var" },
+        { id: 9, txt: "3’ün altında bakım ekipmanı var**", note: "** IV İnfüzyon, Solunum Cihazı, Kateter, Dren vb." },
+        { id: 10, txt: "Yatak korkulukları bulunmuyor/çalışmıyor" },
+        { id: 11, txt: "Yürüme alanlarında fiziksel engel(ler) var" }
     ];
 
-    const qArea = document.getElementById('questions-area');
-    let lastCat = "";
-    sorular.forEach((s, i) => {
-        if(s.cat !== lastCat) {
-            qArea.innerHTML += `<div class="category">${s.cat}</div>`;
-            lastCat = s.cat;
-        }
-        qArea.innerHTML += `
-            <div class="risk-row">
-                <input type="checkbox" id="m${i}" class="chk" data-p="${s.p}" onchange="analizEt()">
-                <label for="m${i}">${s.txt} (+${s.p})</label>
-            </div>`;
-    });
+    const majorData = [
+        { id: 12, txt: "Bilinç açık, koopere değil" },
+        { id: 13, txt: "Ayakta/yürürken denge problemi var" },
+        { id: 14, txt: "Baş dönmesi var" },
+        { id: 15, txt: "Ortostatik hipotansiyonu var" },
+        { id: 16, txt: "Görme engeli var" },
+        { id: 17, txt: "Bedensel engeli var" },
+        { id: 18, txt: "3 ve üstü bakım ekipmanı var" },
+        { id: 19, txt: "Son 1 hafta içinde riskli ilaç kullanımı var" }
+    ];
 
-    function analizEt() {
-        let total = 0;
-        document.querySelectorAll('.chk:checked').forEach(c => total += parseInt(c.dataset.p));
-        document.getElementById('score-num').innerText = total;
+    function renderLists() {
+        const minorDiv = document.getElementById('minor-container');
+        const majorDiv = document.getElementById('major-container');
 
-        const diagBox = document.getElementById('diagnosis');
-        if (total >= 5) {
+        minorData.forEach(item => {
+            minorDiv.innerHTML += `
+                <div class="risk-item">
+                    <div class="row-main">
+                        <input type="checkbox" class="itaki-check" data-p="1" onchange="updateUI()">
+                        <label>${item.id}. ${item.txt}</label>
+                    </div>
+                    ${item.note ? `<div class="info-note">${item.note}</div>` : ''}
+                </div>`;
+        });
+
+        majorData.forEach(item => {
+            majorDiv.innerHTML += `
+                <div class="risk-item">
+                    <div class="row-main">
+                        <input type="checkbox" class="itaki-check" data-p="5" onchange="updateUI()">
+                        <label>${item.id}. ${item.txt}</label>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function updateUI() {
+        let score = 0;
+        document.querySelectorAll('.itaki-check').forEach(box => {
+            if(box.checked) score += parseInt(box.getAttribute('data-p'));
+        });
+
+        const scoreDisplay = document.getElementById('totalScore');
+        const banner = document.getElementById('scoreBanner');
+        const diagBox = document.getElementById('diagnosis-box');
+
+        scoreDisplay.innerText = score;
+
+        if (score >= 5) {
+            banner.className = "score-banner high-risk-bg";
+            document.getElementById('risk-text').innerText = "Yüksek Risk";
             diagBox.style.display = "block";
         } else {
+            banner.className = "score-banner low-risk-bg";
+            document.getElementById('risk-text').innerText = "Düşük Risk";
             diagBox.style.display = "none";
         }
     }
 
-    function veriyiGonder() {
-        const puan = document.getElementById('score-num').innerText;
-        const tani = puan >= 5 ? "Düşme Riski Tanısı Konuldu" : "Risk Düşük";
-        
+    function goToDiagnosis() {
+        document.getElementById('nanda-section').scrollIntoView();
+        document.getElementById('tani-dusme').checked = true;
+        const row = document.getElementById('dusme-riski-row');
+        row.classList.add('highlight-tani');
+        setTimeout(() => row.classList.remove('highlight-tani'), 2000);
+    }
+
+    function veriyiBulutaGonder() {
+        const score = document.getElementById('totalScore').innerText;
+        const riskLevel = document.getElementById('risk-text').innerText;
+        const taniOnayi = document.getElementById('tani-dusme').checked ? "Konuldu" : "Konulmadı";
+
         db.ref('kayitlar').push({
             tarih: new Date().toLocaleString('tr-TR'),
-            toplam_puan: puan,
-            hemsirelik_tanisi: tani,
-            durum: "Aktif Kayıt"
-        }).then(() => alert("Hocam tebrikler! Veri ve tanı başarıyla buluta kaydedildi."));
+            puan: score,
+            risk: riskLevel,
+            tani_durumu: taniOnayi
+        }).then(() => {
+            alert("Hocam İşlem Başarılı! Veriler Firebase'e kaydedildi.");
+        }).catch(e => alert("Hata: " + e.message));
     }
+
+    renderLists();
 </script>
 </body>
 </html>
